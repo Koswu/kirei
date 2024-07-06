@@ -1,1 +1,1 @@
-from _app.cli import CliApplication as CliApplication
+from kirei._app.cli import CliApplication as CliApplication

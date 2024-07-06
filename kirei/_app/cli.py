@@ -19,6 +19,7 @@ import typing_extensions
 
 import inquirer
 import typer
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from kirei._types import Application, Task_T, Task
 
 
@@ -56,6 +57,8 @@ class TextInputParameter(Generic[_T]):
     def parse(cls, index: int, param: inspect.Parameter) -> Self:
         name = param.name
         tp = _get_original_tp(param.annotation)
+        if tp is inspect.Parameter.empty:
+            tp = str
         if tp not in _USER_TYPE_HINT_MAPPING:
             raise TypeError(_("Unsupported task type: {}").format(tp))
         return cls(
@@ -67,9 +70,9 @@ class TextInputParameter(Generic[_T]):
 
     def query_value(self) -> _T:
         while True:
-            res: str = inquirer.text(
+            res: str = typer.prompt(
                 _("请输入第 {} 个参数，参数名称 {}, 参数类型: {}").format(
-                    self._index, self._name
+                    self._index, self._name, self._user_type_hint
                 )
             )
             try:
@@ -78,7 +81,7 @@ class TextInputParameter(Generic[_T]):
                 typer.secho(
                     _("参数不合法，请重新输入: {}").format(err), fg=typer.colors.YELLOW
                 )
-                typer.prompt(_("请按 Enter 继续..."))
+                typer.prompt(_("请按 Enter 继续..."), default="")
 
 
 @final
@@ -101,10 +104,16 @@ class ParsedTask:
         for param in self._params:
             self._filled_param.append(param.query_value())
         typer.secho(_("开始执行任务 {}").format(self._name), fg=typer.colors.GREEN)
-        res = self._task(*self._filled_param)
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
+        ) as progress:
+            task = progress.add_task(_("正在执行任务 {}").format(self._name))
+            res = self._task(*self._filled_param)
         typer.secho(_("任务 {} 执行完毕").format(self._name), fg=typer.colors.GREEN)
         typer.secho(_("执行结果为: {}").format(res))
-        typer.prompt(_("请按 Enter 继续..."))
+        typer.prompt(_("请按 Enter 继续..."), default="")
 
 
 def _exit_task():
@@ -116,10 +125,7 @@ class CliApplication(Application):
         self,
         title: Optional[str] = None,
     ):
-        self._exit_task_name = _("退出")
-        self._name_task_mapping: Dict[str, ParsedTask] = {
-            _("退出"): ParsedTask(_exit_task)
-        }
+        self._name_task_mapping: Dict[str, ParsedTask] = {}
         self._title = title
 
     def register(self) -> Callable[[Task_T], Task_T]:
@@ -136,10 +142,11 @@ class CliApplication(Application):
         return True
 
     def _main(self):
+        self._name_task_mapping[_("退出")] = ParsedTask(_exit_task)
         while self._loop():
             task_name: str = inquirer.list_input(
                 _("请选择你要执行的任务"),
-                choices=list(self._name_task_mapping.keys()) + [_("退出")],
+                choices=self._name_task_mapping.keys(),
             )
             task = self._name_task_mapping[task_name]
             task.query_and_run()
