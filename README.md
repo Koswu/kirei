@@ -1,7 +1,7 @@
 # KiRei
 
-kirei is a typed, multi-backend user interface framework. 
-you can easy to add user interface to your script.
+Kirei is a typed, multi-backend user interface framework. 
+You can easily add an (or multiple, if you want!) user interface to your script.
 
 
 ## Quick Start

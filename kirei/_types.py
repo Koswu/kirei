@@ -1,12 +1,16 @@
-from abc import ABC
-from typing import Any, Callable
+from abc import ABC, abstractmethod
+from typing import Callable, NoReturn, TypeVar
 
 
 Task = Callable  # Any callable is a valid Task
 
 
 class Application(ABC):
-    def __call__(self) -> Any:
+    @abstractmethod
+    def register[Task_T: Task](self) -> Callable[[Task_T], Task_T]: ...
+
+    @abstractmethod
+    def __call__(self) -> NoReturn:
         # usage: app = XXApplication()
         # ... (register your task)
         # app()
