@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kirei"
-version = "0.0.1"
+version = "0.0.2"
 description = "kirei is a typed, multi-backend user interface framework. you can easy to add user interface to your script."
 authors = ["KosWu <koswu@outlook.com>"]
 license = "MIT"
