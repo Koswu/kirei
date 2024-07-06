@@ -4,16 +4,23 @@ version = "0.0.1"
 description = "kirei is a typed, multi-backend user interface framework. you can easy to add user interface to your script."
 authors = ["KosWu <koswu@outlook.com>"]
 license = "MIT"
+exclude = [ 
+    "demo",
+    "tests"
+]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
 typer = "^0.12.3"
+inquirer = "^3.3.0"
+pydantic = "^2.8.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 black = "^24.4.2"
 pylint = "^3.2.5"
+ipython = "^8.26.0"
 
 [build-system]
 requires = ["poetry-core"]

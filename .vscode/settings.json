@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
-        "kirei"
-    ]
+        "kirei",
+        "typer"
+    ],
+    "python.analysis.autoFormatStrings": false
 }
