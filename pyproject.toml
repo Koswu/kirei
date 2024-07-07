@@ -23,6 +23,7 @@ pytest = "^8.2.2"
 black = "^24.4.2"
 pylint = "^3.2.5"
 ipython = "^8.26.0"
+babel = "^2.15.0"
 
 [build-system]
 requires = ["poetry-core"]
