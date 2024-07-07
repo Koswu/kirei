@@ -1,7 +1,11 @@
+import logging
 import time
 import kirei as kr
+from kirei import types as krtp
 
 app = kr.CliApplication()
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 @app.register()
@@ -22,6 +26,11 @@ def long_time_operation():
 @app.register()
 def div(a: int, b: int):
     return a / b
+
+
+@app.register()
+def file_test(f: krtp.UserInputFilePath):
+    print(f)
 
 
 if __name__ == "__main__":
