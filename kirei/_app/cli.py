@@ -168,9 +168,14 @@ class CliTask:
         self._output_param = CliOutputParameter(task.output_param)
         self._filled_param = []
 
-    def query_and_run(self):
+    def _query_param(self):
+        self._filled_param = []
         for param in self._input_params:
             self._filled_param.append(param.query_value())
+
+    def query_and_run(self):
+        self._query_param()
+        assert len(self._filled_param) == len(self._input_params)
         typer.secho(_("开始执行任务 {}").format(self._task.name), fg=typer.colors.GREEN)
         with Progress(
             SpinnerColumn(),
