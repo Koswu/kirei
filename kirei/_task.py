@@ -26,36 +26,21 @@ class InputParameter(Generic[_T]):
     name: str
     original_tp: Type[_T]
     other_annotations: List[Any]
-    _validators: List[PostValidator[_T]]
 
     @classmethod
     def parse(cls, index: int, param: inspect.Parameter) -> Self:
         tp = _get_original_tp(param.annotation)
-        other_annotations = list(typing_extensions.get_args(param.annotation))[1:]
-        validators = [
-            annotation
-            for annotation in other_annotations
-            if isinstance(annotation, PostValidator)
-        ]
         return cls(
             index=index,
             name=param.name,
             original_tp=tp,
             other_annotations=list(typing_extensions.get_args(param.annotation))[1:],
-            _validators=validators,
         )
-
-    def validate(self, value: _T):
-        """
-        :raise ValueError
-        """
-        for validator in self._validators:
-            validator(value)
 
 
 @dataclass(frozen=True)
-class OutputParameter:
-    original_tp: Type
+class OutputParameter(Generic[_T]):
+    original_tp: Type[_T]
     other_annotations: List[Any]
 
     @classmethod
@@ -70,6 +55,7 @@ class OutputParameter:
 @dataclass(frozen=True)
 class ParsedTask:
     origin_task: Task
+    name: str
     input_params: List[InputParameter]
     output_param: OutputParameter
 
@@ -78,6 +64,7 @@ class ParsedTask:
         sig = inspect.signature(task)
         return cls(
             origin_task=task,
+            name=task.__name__,
             input_params=[
                 InputParameter.parse(i, param)
                 for i, param in enumerate(sig.parameters.values(), 1)

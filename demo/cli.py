@@ -33,5 +33,10 @@ def file_test(f: krtp.UserInputFilePath):
     print(f)
 
 
+@app.register()
+def csv_to_xlsx(f: krtp.UserInputFilePath) -> krtp.UserOutputFilePath:
+    return krtp.UserOutputFilePath(f)
+
+
 if __name__ == "__main__":
     app()
