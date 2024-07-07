@@ -19,7 +19,3 @@ class Application(ABC):
         # ... (register your task)
         # app()
         ...
-
-
-class Converter(Protocol[_T]):
-    pass

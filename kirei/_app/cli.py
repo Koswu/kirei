@@ -2,29 +2,29 @@ from __future__ import annotations
 from decimal import Decimal
 import gettext
 import inspect
-import sys
 from typing import (
     Annotated,
     Callable,
     Dict,
     Generic,
-    NoReturn,
     Optional,
     Type,
     TypeVar,
     final,
 )
+import inquirer
+import rich
 from typing_extensions import Self
 import typing_extensions
 
-import inquirer
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from kirei._types import Application, Task_T, Task
+from kirei._types import Task_T, Task, Application
 
 
 _ = gettext.gettext
 _T = TypeVar("_T")
+_console = rich.console.Console()
 
 _USER_TYPE_HINT_MAPPING = {
     int: _("整数"),
@@ -81,7 +81,6 @@ class TextInputParameter(Generic[_T]):
                 typer.secho(
                     _("参数不合法，请重新输入: {}").format(err), fg=typer.colors.YELLOW
                 )
-                typer.prompt(_("请按 Enter 继续..."), default="")
 
 
 @final
@@ -110,14 +109,14 @@ class ParsedTask:
             transient=True,
         ) as progress:
             task = progress.add_task(_("正在执行任务 {}").format(self._name))
-            res = self._task(*self._filled_param)
+            try:
+                res = self._task(*self._filled_param)
+            except Exception as err:
+                _console.print_exception(show_locals=True)
+                typer.secho(_("任务 {} 执行失败").format(self._name))
+                return
         typer.secho(_("任务 {} 执行完毕").format(self._name), fg=typer.colors.GREEN)
         typer.secho(_("执行结果为: {}").format(res))
-        typer.prompt(_("请按 Enter 继续..."), default="")
-
-
-def _exit_task():
-    sys.exit(0)
 
 
 class CliApplication(Application):

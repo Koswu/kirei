@@ -19,5 +19,10 @@ def long_time_operation():
     time.sleep(5)
 
 
+@app.register()
+def div(a: int, b: int):
+    return a / b
+
+
 if __name__ == "__main__":
     app()
