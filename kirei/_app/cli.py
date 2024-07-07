@@ -142,15 +142,16 @@ class CliApplication(Application):
         return True
 
     def _main(self):
-        self._name_task_mapping[_("退出")] = ParsedTask(_exit_task)
+        exit_command = _("退出")
         while self._loop():
             task_name: str = inquirer.list_input(
                 _("请选择你要执行的任务"),
-                choices=self._name_task_mapping.keys(),
+                choices=list(self._name_task_mapping.keys()) + [exit_command],
             )
+            if task_name == exit_command:
+                return
             task = self._name_task_mapping[task_name]
             task.query_and_run()
 
-    def __call__(self) -> NoReturn:
+    def __call__(self):
         typer.run(self._main)
-        sys.exit(0)

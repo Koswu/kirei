@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Callable, NoReturn, TypeVar
+from typing_extensions import Protocol
 
 
 Task = Callable  # Any callable is a valid Task
 Task_T = TypeVar("Task_T", bound=Task)
+
+_T = TypeVar("_T")
 
 
 class Application(ABC):
@@ -16,3 +19,7 @@ class Application(ABC):
         # ... (register your task)
         # app()
         ...
+
+
+class Converter(Protocol[_T]):
+    pass

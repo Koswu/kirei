@@ -12,7 +12,7 @@ import kirei as kr
 app = kr.CliApplication()
 
 @app.register()
-def echo(msg):  # no type hint will assume your input and output are `str` type
+def echo(msg):  # no type hint will assumed your input are `str` type, and parse your output as str type
     return msg
 
 

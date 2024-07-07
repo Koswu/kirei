@@ -6,7 +6,8 @@ authors = ["KosWu <koswu@outlook.com>"]
 license = "MIT"
 exclude = [ 
     "demo",
-    "tests"
+    "tests",
+    "docs"
 ]
 readme = "README.md"
 

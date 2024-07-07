@@ -1,5 +1,5 @@
-.pyc
-.pyo
+*.pyc
+*.pyo
 dist/
 .pytest_cache/
 
@@ -158,3 +158,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+kirei/__pycache__/_types.cpython-310.pyc
