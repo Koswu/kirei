@@ -19,6 +19,7 @@ from typing import (
 from types import NotImplementedType
 from typing_extensions import ParamSpec
 
+from kirei.types.annotated import get_default_validator_provider
 from kirei.types.annotated._validator import (
     AnyValidator,
     TypeValidatorProvider,
@@ -124,3 +125,15 @@ class ParsedFunc(Generic[_P, _T]):
 
     def __call__(self) -> _T:
         return self._func(*[param.get_value() for param in self._func_params])  # type: ignore
+
+
+class FuncParser:
+    def __init__(
+        self,
+        injectors: List[ParamInjector],
+        validator_provider: Optional[ValidatorProvider],
+    ):
+        self._injectors = injectors
+        self._validator_provider = (
+            validator_provider or get_default_validator_provider()
+        )

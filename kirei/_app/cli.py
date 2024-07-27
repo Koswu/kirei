@@ -25,6 +25,7 @@ import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from kirei.types import Task_T, Application, UserInputFilePath, UserOutputFilePath
 from kirei._task import InputParameter, ParsedTask, OutputParameter
+from kirei.types._func_parser import ParsedFunc
 
 
 _ = gettext.gettext
@@ -208,7 +209,7 @@ class CliApplication(Application):
         self,
         title: Optional[str] = None,
     ):
-        self._name_task_mapping: Dict[str, CliTask] = {}
+        self._name_task_mapping: Dict[str, ParsedFunc] = {}
         self._title = title
         self._exit_command = _("退出")
 
@@ -218,7 +219,7 @@ class CliApplication(Application):
             assert task_name != self._exit_command
             if task_name in self._name_task_mapping:
                 raise TypeError(_(f"Multiple task can not have same name: {task_name}"))
-            self._name_task_mapping[task_name] = CliTask(ParsedTask.parse(func))
+            self._name_task_mapping[task_name] = ParsedFunc(ParsedTask.parse(func))
             return func
 
         return decorator
