@@ -1,5 +1,7 @@
 from __future__ import annotations
 from contextlib import contextmanager
+from dataclasses import dataclass
+import functools
 import inspect
 import logging
 from typing import (
@@ -102,49 +104,47 @@ _P = ParamSpec("_P")
 _T = TypeVar("_T")
 
 
+@dataclass
+class FuncMetaData:
+    name: str
+    non_injected_params: List[FuncParam]
+    return_type_annotation: ParamAnnotation
+
+
+def _get_return_type_annotation(func: Callable) -> ParamAnnotation:
+    annotation = inspect.signature(func).return_annotation
+    if annotation is inspect.Parameter.empty:
+        return ParamAnnotation(str)
+    return ParamAnnotation(annotation)
+
+
 class TaskSession(Generic[_P, _T]):
     def __init__(
         self,
         injector_collection: ParamInjectorCollection,
         func: Callable[_P, _T],
-        validator_provider: ValidatorProvider,
         task_name: str,
         params: List[FuncParam],
     ):
         self._injector_collection = injector_collection
         self._func = func
-        self._validator_provider = validator_provider
-        self._task_name = task_name
         self._params = [
             param.maybe_fill_with_injector(self._injector_collection)
             for param in params
         ]
-        self._non_injected_params = [
-            param for param in self._params if not param.is_filled
+        non_injected_params = [param for param in self._params if not param.is_filled]
+        non_injected_params = [
+            param.reindex(i) for i, param in enumerate(non_injected_params, 1)
         ]
+        self._meta_data = FuncMetaData(
+            name=task_name,
+            non_injected_params=non_injected_params,
+            return_type_annotation=_get_return_type_annotation(self._func),
+        )
 
     @property
-    def name(self):
-        return self._task_name
-
-    def reindex_with_non_filled_params(self):
-        index = 1
-        for param in self._params:
-            if not param.is_filled:
-                param.reindex(index)
-                index += 1
-        return self
-
-    @property
-    def non_injected_params(self) -> Sequence[FuncParam]:
-        return self._non_injected_params
-
-    @property
-    def return_type_annotation(self):
-        annotation = inspect.signature(self._func).return_annotation
-        if annotation is inspect.Parameter.empty:
-            return ParamAnnotation(str)
-        return ParamAnnotation(annotation)
+    def meta_data(self):
+        return self._meta_data
 
     def __call__(self) -> _T:
         res = self._func(*[param.get_value() for param in self._params])  # type: ignore
@@ -170,12 +170,18 @@ class ParsedFunc(Generic[_P, _T]):
             yield TaskSession(
                 injector,
                 self._func,
-                self._validator_provider,
                 self._name,
-                list(self._get_func_params()),
+                list(self._params),
             )
 
-    def _get_func_params(self) -> Iterator[FuncParam]:
+    @functools.cache
+    def get_metadata(self):
+        # HACK: 创建一个临时 session 来获取 metadata
+        with self.enter_session() as session:
+            return session.meta_data
+
+    @property
+    def _params(self) -> Iterator[FuncParam]:
         sig: inspect.Signature = inspect.signature(self._func)
         index = 1
         for param in sig.parameters.values():

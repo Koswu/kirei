@@ -166,11 +166,11 @@ class CliApplication(Application):
 
     def _execute_task(self, task: ParsedFunc):
         with task.enter_session() as session:
-            session = session.reindex_with_non_filled_params()
-            for param in session.non_injected_params:
+            for param in session.meta_data.non_injected_params:
                 self._fill_param(param)
             typer.secho(
-                _("开始执行任务 {}").format(session.name), fg=typer.colors.GREEN
+                _("开始执行任务 {}").format(session.meta_data.name),
+                fg=typer.colors.GREEN,
             )
             with Progress(
                 SpinnerColumn(),
@@ -178,7 +178,9 @@ class CliApplication(Application):
                 transient=True,
             ) as progress:
                 try:
-                    progress.add_task(_("正在执行任务 {}").format(session.name))
+                    progress.add_task(
+                        _("正在执行任务 {}").format(session.meta_data.name)
+                    )
                     res = session()
                 except Exception as err:
                     typer.secho(
@@ -188,7 +190,7 @@ class CliApplication(Application):
                     typer.secho(_("任务执行失败"), fg=typer.colors.RED)
                     return
             typer.secho(_("任务执行完毕"), fg=typer.colors.GREEN)
-            self._show_task_result(session.return_type_annotation, res)
+            self._show_task_result(session.meta_data.return_type_annotation, res)
 
     def _main(self):
         while self._is_running:
