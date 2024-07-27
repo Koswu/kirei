@@ -44,8 +44,12 @@ class FuncParam(Generic[_T]):
         self._tp = ParamAnnotation(tp)
         self._validator = validator
 
+    @property
+    def annotation(self):
+        return self._tp
+
     def __repr__(self) -> str:
-        return super().__repr__() + f"({self._name})"
+        return super().__str__() + f"({self._name}, {self._tp})"
 
     @property
     def index(self):
@@ -111,10 +115,7 @@ class TaskSession(Generic[_P, _T]):
         self._func = func
         self._validator_provider = validator_provider
         self._task_name = task_name
-        self._params = [
-            param.maybe_fill_with_injector(self._injector_collection)
-            for param in params
-        ]
+        self._params = [self._injector_collection(param.annotation) for param in params]
 
     @property
     def name(self):
