@@ -7,19 +7,17 @@ from typing import (
     Callable,
     Generic,
     Iterator,
-    List,
     Optional,
     Sequence,
     Type,
     TypeVar,
-    Union,
     cast,
     get_args,
     get_origin,
 )
-from types import NotImplementedType
 from typing_extensions import ParamSpec
 
+from kirei.types._injector import ParamInjector, ParamInjectorCollection
 from kirei.types.annotated import get_default_validator_provider
 from kirei.types.annotated._validator import (
     AnyValidator,
@@ -61,9 +59,6 @@ class ParamAnnotation(Generic[_T]):
             if isinstance(annotation, info_t):
                 return annotation
         return None
-
-
-ParamInjector = Callable[[ParamAnnotation[_T]], Union[_T, NotImplementedType]]
 
 
 class FuncParam(Generic[_T]):
@@ -134,18 +129,17 @@ _T = TypeVar("_T")
 class ParsedFunc(Generic[_P, _T]):
     def __init__(
         self,
-        injectors: List[ParamInjector],
+        injector: ParamInjector,
         func: Callable[_P, _T],
         validator_provider: ValidatorProvider,
         override_name: Optional[str] = None,
     ):
-        self._injectors = injectors
+        self._injector = injector
         self._func = func
         self._validator_provider = validator_provider
         self._func_params = list(self._get_func_params())
-        for injector in self._injectors:
-            for param in self._func_params:
-                param.maybe_fill_with_injector(injector)
+        for param in self._func_params:
+            param.maybe_fill_with_injector(injector)
         self._name = override_name or func.__name__
 
     @property
@@ -185,15 +179,13 @@ class ParsedFunc(Generic[_P, _T]):
 class FuncParser:
     def __init__(
         self,
-        injectors: Optional[List[ParamInjector]] = None,
+        injector_collection: Optional[ParamInjectorCollection] = None,
         validator_provider: Optional[ValidatorProvider] = None,
     ):
-        self._injectors = injectors or []
+        self._injector = injector_collection or ParamInjectorCollection()
         self._validator_provider = (
             validator_provider or get_default_validator_provider()
         )
 
     def parse(self, func: Callable, override_name: Optional[str] = None) -> ParsedFunc:
-        return ParsedFunc(
-            self._injectors, func, self._validator_provider, override_name
-        )
+        return ParsedFunc(self._injector, func, self._validator_provider, override_name)

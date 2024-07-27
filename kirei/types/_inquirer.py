@@ -1,11 +1,12 @@
-from typing import Any, Callable, Dict, List, Type, TypeVar
+from types import NotImplementedType
+from typing import Any, Callable, Dict, List, Type, TypeVar, Union
 
 from kirei.types._func_parser import FuncParam, ParamAnnotation
 
 _T = TypeVar("_T")
 
 
-_TypeParamInquirer = Callable[[FuncParam], Any]
+_TypeParamInquirer = Callable[[FuncParam], Union[Any, NotImplementedType]]
 
 
 class ParamInquirerCollection:
