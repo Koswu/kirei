@@ -44,3 +44,4 @@ def csv_to_xlsx(f: kr.UserInputFilePath) -> kr.OutputFilePath:
 
 if __name__ == "__main__":
     web_app()
+    # app()
