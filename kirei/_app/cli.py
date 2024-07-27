@@ -2,6 +2,7 @@ from __future__ import annotations
 from decimal import Decimal
 import gettext
 import logging
+import os
 import pathlib
 import shutil
 from typing import (
@@ -76,7 +77,9 @@ def _user_file_inquirer(param: FuncParam) -> str:
         param.index,
         param.name,
         _("文件(需要输入文件路径)"),
-        completer=ptc.PathCompleter(),
+        completer=ptc.PathCompleter(
+            get_paths=os.listdir,
+        ),
     )
 
 
