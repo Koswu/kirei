@@ -1,7 +1,6 @@
 import logging
 import time
 import kirei as kr
-from kirei import types as krtp
 
 app = kr.CliApplication()
 web_app = kr.WebApplication()
