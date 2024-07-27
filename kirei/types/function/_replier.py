@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Any, Callable, Dict, List, Type, TypeVar, Union
 from types import NoneType, NotImplementedType
 
-from kirei.types._param_annotation import ParamAnnotation
+from kirei.types.function._param_annotation import ParamAnnotation
 
 
 _T = TypeVar("_T")

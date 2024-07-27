@@ -16,8 +16,8 @@ from typing import (
 )
 from typing_extensions import ParamSpec
 
-from kirei.types._param_annotation import ParamAnnotation
-from kirei.types._injector import (
+from kirei.types.function._param_annotation import ParamAnnotation
+from kirei.types.function._injector import (
     ContextInjectorCollection,
     ParamInjector,
     ParamInjectorCollection,

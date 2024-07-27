@@ -2,7 +2,6 @@ from __future__ import annotations
 from decimal import Decimal
 import gettext
 import logging
-import os
 import pathlib
 import shutil
 from typing import (
@@ -16,7 +15,6 @@ import inquirer
 import prompt_toolkit as pt
 from prompt_toolkit import completion as ptc
 import rich
-from typing_extensions import Self
 
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -29,9 +27,9 @@ from kirei.types import (
     ParamInquirerCollection,
     ReplierCollection,
 )
-from kirei.types._injector import get_default_context_collection
-from kirei.types._param_annotation import ParamAnnotation
-from kirei.types.annotated.basic_types import PathType
+from kirei.types.function._injector import get_default_context_collection
+from kirei.types.function._param_annotation import ParamAnnotation
+from kirei.types.basic_types import PathType
 
 
 _ = gettext.gettext
@@ -103,7 +101,7 @@ def _file_replier(param: ParamAnnotation, res: pathlib.Path):
                 completer=ptc.PathCompleter(only_directories=True),
             )
         )
-        if out_path.exists() and out_path.is_dir():
+        if out_path.is_dir() or out_path.parent.is_dir():
             break
         typer.secho(_("输入的路径不存在或不是一个有效的目录，请重新输入"))
     shutil.copy(res, out_path)

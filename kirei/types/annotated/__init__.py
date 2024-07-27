@@ -1,4 +1,3 @@
-from typing_extensions import Annotated
 from kirei.types.annotated._validator import (
     ValidatorProvider as ValidatorProvider,
     AfterValidator as AfterValidator,
@@ -6,7 +5,7 @@ from kirei.types.annotated._validator import (
     ValidatorChain as ValidatorChain,
     TypeValidatorProvider as TypeValidatorProvider,
 )
-from kirei.types.annotated.basic_types import PathType, Path
+from kirei.types.basic_types import PathType, Path
 
 
 def _validate_path_type(path_type: PathType, path: Path):

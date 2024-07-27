@@ -4,8 +4,8 @@ import tempfile
 from types import NotImplementedType
 from typing import Callable, Dict, List, Type, TypeVar, Union, cast
 
-from kirei.types._param_annotation import ParamAnnotation
-from kirei.types.annotated.basic_types import PathType
+from kirei.types.function._param_annotation import ParamAnnotation
+from kirei.types.basic_types import PathType
 
 _T = TypeVar("_T")
 
