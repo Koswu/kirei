@@ -1,5 +1,6 @@
 from __future__ import annotations
 import inspect
+import logging
 from typing import (
     Annotated,
     Any,
@@ -28,6 +29,7 @@ from kirei.types.annotated._validator import (
 
 _T = TypeVar("_T")
 _InfoT = TypeVar("_InfoT")
+_logger = logging.getLogger(__name__)
 
 
 class ParamAnnotation(Generic[_T]):
@@ -108,6 +110,7 @@ class FuncParam(Generic[_T]):
         return cast(_T, self._filled_value)
 
     def fill(self, value: Any):
+        assert not self._is_filled
         self._is_filled = True
         self._filled_value = self._validator(value)
         return self
@@ -135,13 +138,20 @@ class ParsedFunc(Generic[_P, _T]):
         self._injectors = injectors
         self._func = func
         self._validator_provider = validator_provider
+        self._func_params = list(self._get_func_params())
+        for injector in self._injectors:
+            for param in self._func_params:
+                param.maybe_fill_with_injector(injector)
+
+    @property
+    def return_type_annotation(self):
+        return ParamAnnotation(inspect.signature(self._func).return_annotation)
 
     @property
     def func_name(self):
         return self._func.__name__
 
-    @property
-    def _func_params(self) -> Iterator[FuncParam]:
+    def _get_func_params(self) -> Iterator[FuncParam]:
         sig = inspect.signature(self._func)
         index = 1
         for param in sig.parameters.values():
@@ -153,11 +163,9 @@ class ParsedFunc(Generic[_P, _T]):
             index += 1
 
     @property
-    def non_injected_params(self) -> Iterator[FuncParam]:
+    def non_filled_params(self) -> Iterator[FuncParam]:
         index = 1
         for param in self._func_params:
-            for injector in self._injectors:
-                param.maybe_fill_with_injector(injector)
             if not param.is_filled:
                 yield param.reindex(index)
                 index += 1

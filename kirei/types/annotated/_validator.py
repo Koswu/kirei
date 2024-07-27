@@ -36,6 +36,9 @@ class ValidatorChain(Sequence[AnyValidator[_TargetT]]):
     def __len__(self) -> int:
         return len(self._chain)
 
+    def __getitem__(self, index: int) -> AnyValidator[_TargetT]:
+        return self._chain[index]
+
     def __iter__(self) -> Iterator[AnyValidator[_TargetT]]:
         return iter(self._chain)
 

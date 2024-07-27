@@ -10,21 +10,20 @@ _TypeParamInquirer = Callable[[FuncParam], Any]
 
 class ParamInquirerCollection:
     def __init__(self):
-        self._inquirers: Dict[Type, _TypeParamInquirer] = {}
+        self._inquirers: Dict[Type, List[_TypeParamInquirer]] = {}
 
     def register(self, inquirer: _TypeParamInquirer, tp: Type[_T]):
-        self._inquirers[tp] = inquirer
+        self._inquirers.setdefault(tp, []).append(inquirer)
         return self
 
     def register_multi(self, inquirer: _TypeParamInquirer, tps: List[Type[_T]]):
         for tp in tps:
-            self._inquirers[tp] = inquirer
+            self._inquirers.setdefault(tp, []).append(inquirer)
         return self
 
     def __call__(self, param: FuncParam) -> Any:
-        if param.real_source_type not in self._inquirers:
-            raise TypeError(f"Unsupported input type {param.real_source_type}")
-        res = self._inquirers[param.real_source_type](param)
-        if res is NotImplemented:
-            raise TypeError(f"Unsupported input type {param.real_source_type}")
-        return res
+        for inquirer in self._inquirers.get(param.real_source_type, []):
+            res = inquirer(param)
+            if res is not NotImplemented:
+                return res
+        raise TypeError(f"Unsupported input type {param.real_source_type}")
