@@ -3,6 +3,7 @@ import gettext
 import pathlib
 from tempfile import TemporaryDirectory
 from typing import Callable, NewType, TypeVar
+from kirei.types._func_parser import FuncParam as FuncParam, ParsedFunc as ParsedFunc
 
 
 Task = Callable  # Any callable is a valid Task

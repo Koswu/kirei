@@ -25,7 +25,6 @@ import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from kirei.types import Task_T, Application, UserInputFilePath, UserOutputFilePath
 from kirei._task import InputParameter, ParsedTask, OutputParameter
-from kirei.types.validate import PostValidator
 
 
 _ = gettext.gettext
