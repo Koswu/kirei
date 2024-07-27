@@ -115,7 +115,10 @@ class TaskSession(Generic[_P, _T]):
         self._func = func
         self._validator_provider = validator_provider
         self._task_name = task_name
-        self._params = [self._injector_collection(param.annotation) for param in params]
+        self._params = [
+            param.maybe_fill_with_injector(self._injector_collection)
+            for param in params
+        ]
 
     @property
     def name(self):
