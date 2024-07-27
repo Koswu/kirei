@@ -166,7 +166,8 @@ class CliApplication(Application):
 
     def _execute_task(self, task: ParsedFunc):
         with task.enter_session() as session:
-            for param in session.non_filled_params:
+            session = session.reindex_with_non_filled_params()
+            for param in session.non_injected_params:
                 self._fill_param(param)
             typer.secho(
                 _("开始执行任务 {}").format(session.name), fg=typer.colors.GREEN

@@ -119,18 +119,25 @@ class TaskSession(Generic[_P, _T]):
             param.maybe_fill_with_injector(self._injector_collection)
             for param in params
         ]
+        self._non_injected_params = [
+            param for param in self._params if not param.is_filled
+        ]
 
     @property
     def name(self):
         return self._task_name
 
-    @property
-    def non_filled_params(self) -> Iterator[FuncParam]:
+    def reindex_with_non_filled_params(self):
         index = 1
         for param in self._params:
             if not param.is_filled:
-                yield param.reindex(index)
+                param.reindex(index)
                 index += 1
+        return self
+
+    @property
+    def non_injected_params(self) -> Sequence[FuncParam]:
+        return self._non_injected_params
 
     @property
     def return_type_annotation(self):
