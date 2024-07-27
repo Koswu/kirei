@@ -1,7 +1,8 @@
 from types import NotImplementedType
 from typing import Any, Callable, Dict, List, Type, TypeVar, Union
 
-from kirei.types._func_parser import FuncParam, ParamAnnotation
+from kirei.types._param_annotation import ParamAnnotation
+from kirei.types._func_parser import FuncParam
 
 _T = TypeVar("_T")
 

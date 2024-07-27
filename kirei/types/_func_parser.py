@@ -1,23 +1,27 @@
 from __future__ import annotations
+from contextlib import contextmanager
 import inspect
 import logging
 from typing import (
-    Annotated,
     Any,
     Callable,
     Generic,
     Iterator,
+    List,
     Optional,
     Sequence,
     Type,
     TypeVar,
     cast,
-    get_args,
-    get_origin,
 )
 from typing_extensions import ParamSpec
 
-from kirei.types._injector import ParamInjector, ParamInjectorCollection
+from kirei.types._param_annotation import ParamAnnotation
+from kirei.types._injector import (
+    ContextInjectorCollection,
+    ParamInjector,
+    ParamInjectorCollection,
+)
 from kirei.types.annotated import get_default_validator_provider
 from kirei.types.annotated._validator import (
     AnyValidator,
@@ -27,38 +31,6 @@ from kirei.types.annotated._validator import (
 _T = TypeVar("_T")
 _InfoT = TypeVar("_InfoT")
 _logger = logging.getLogger(__name__)
-
-
-class ParamAnnotation(Generic[_T]):
-    def __init__(self, tp: Type[_T]):
-        assert tp is not inspect.Parameter.empty
-        self._tp = tp
-
-    @property
-    def iter_annotated_params(self) -> Sequence[Any]:
-        origin = get_origin(self._tp)
-        if not origin:
-            return []
-        elif origin is Annotated:
-            return get_args(self._tp)[1:]
-        else:
-            raise NotImplementedError(f"Unsupported origin {origin}")
-
-    @property
-    def real_source_type(self) -> Type[_T]:
-        origin = get_origin(self._tp)
-        if origin is None:
-            return self._tp
-        elif origin is Annotated:
-            return get_args(self._tp)[0]
-        else:
-            raise NotImplementedError(f"Unsupported origin {origin}")
-
-    def get_tp_info(self, info_t: Type[_InfoT]) -> Optional[_InfoT]:
-        for annotation in self.iter_annotated_params:
-            if isinstance(annotation, info_t):
-                return annotation
-        return None
 
 
 class FuncParam(Generic[_T]):
@@ -126,21 +98,35 @@ _P = ParamSpec("_P")
 _T = TypeVar("_T")
 
 
-class ParsedFunc(Generic[_P, _T]):
+class TaskSession(Generic[_P, _T]):
     def __init__(
         self,
-        injector: ParamInjector,
+        injector_collection: ParamInjectorCollection,
         func: Callable[_P, _T],
         validator_provider: ValidatorProvider,
-        override_name: Optional[str] = None,
+        task_name: str,
+        params: List[FuncParam],
     ):
-        self._injector = injector
+        self._injector_collection = injector_collection
         self._func = func
         self._validator_provider = validator_provider
-        self._func_params = list(self._get_func_params())
-        for param in self._func_params:
-            param.maybe_fill_with_injector(injector)
-        self._name = override_name or func.__name__
+        self._task_name = task_name
+        self._params = [
+            param.maybe_fill_with_injector(self._injector_collection)
+            for param in params
+        ]
+
+    @property
+    def name(self):
+        return self._task_name
+
+    @property
+    def non_filled_params(self) -> Iterator[FuncParam]:
+        index = 1
+        for param in self._params:
+            if not param.is_filled:
+                yield param.reindex(index)
+                index += 1
 
     @property
     def return_type_annotation(self):
@@ -149,9 +135,34 @@ class ParsedFunc(Generic[_P, _T]):
             return ParamAnnotation(str)
         return ParamAnnotation(annotation)
 
-    @property
-    def name(self):
-        return self._name
+    def __call__(self) -> _T:
+        res = self._func(*[param.get_value() for param in self._func_params])  # type: ignore
+        return res
+
+
+class ParsedFunc(Generic[_P, _T]):
+    def __init__(
+        self,
+        injector_collection: ContextInjectorCollection,
+        func: Callable[_P, _T],
+        validator_provider: ValidatorProvider,
+        override_name: Optional[str] = None,
+    ):
+        self._injector_collection = injector_collection
+        self._func = func
+        self._validator_provider = validator_provider
+        self._name = override_name or func.__name__
+
+    @contextmanager
+    def enter_session(self):
+        with self._injector_collection as injector:
+            yield TaskSession(
+                injector,
+                self._func,
+                self._validator_provider,
+                self._name,
+                list(self._get_func_params()),
+            )
 
     def _get_func_params(self) -> Iterator[FuncParam]:
         sig: inspect.Signature = inspect.signature(self._func)
@@ -164,28 +175,19 @@ class ParsedFunc(Generic[_P, _T]):
             yield FuncParam(index, param.name, tp, validator_chain)
             index += 1
 
-    @property
-    def non_filled_params(self) -> Iterator[FuncParam]:
-        index = 1
-        for param in self._func_params:
-            if not param.is_filled:
-                yield param.reindex(index)
-                index += 1
-
-    def __call__(self) -> _T:
-        return self._func(*[param.get_value() for param in self._func_params])  # type: ignore
-
 
 class FuncParser:
     def __init__(
         self,
-        injector_collection: Optional[ParamInjectorCollection] = None,
+        injector_collection: ContextInjectorCollection,
         validator_provider: Optional[ValidatorProvider] = None,
     ):
-        self._injector = injector_collection or ParamInjectorCollection()
+        self._injector_collection = injector_collection
         self._validator_provider = (
             validator_provider or get_default_validator_provider()
         )
 
     def parse(self, func: Callable, override_name: Optional[str] = None) -> ParsedFunc:
-        return ParsedFunc(self._injector, func, self._validator_provider, override_name)
+        return ParsedFunc(
+            self._injector_collection, func, self._validator_provider, override_name
+        )

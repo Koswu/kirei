@@ -29,7 +29,7 @@ from kirei.types import (
     ParamInquirerCollection,
     ReplierCollection,
 )
-from kirei.types._func_parser import ParamAnnotation
+from kirei.types._param_annotation import ParamAnnotation
 from kirei.types.annotated.basic_types import PathType
 
 
@@ -164,22 +164,29 @@ class CliApplication(Application):
             typer.secho(_("任务执行结果处理失败:{}".format(err)), fg=typer.colors.RED)
 
     def _execute_task(self, task: ParsedFunc):
-        typer.secho(_("开始执行任务 {}").format(task.name), fg=typer.colors.GREEN)
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
-        ) as progress:
-            try:
-                progress.add_task(_("正在执行任务 {}").format(task.name))
-                res = task()
-            except Exception as err:
-                typer.secho(_("任务执行失败:以下是相关的错误信息"), fg=typer.colors.RED)
-                _console.print_exception(show_locals=True)
-                typer.secho(_("任务执行失败"), fg=typer.colors.RED)
-                return
-        typer.secho(_("任务执行完毕"), fg=typer.colors.GREEN)
-        self._show_task_result(task.return_type_annotation, res)
+        with task.enter_session() as session:
+            for param in session.non_filled_params:
+                self._fill_param(param)
+            typer.secho(
+                _("开始执行任务 {}").format(session.name), fg=typer.colors.GREEN
+            )
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                transient=True,
+            ) as progress:
+                try:
+                    progress.add_task(_("正在执行任务 {}").format(session.name))
+                    res = session()
+                except Exception as err:
+                    typer.secho(
+                        _("任务执行失败:以下是相关的错误信息"), fg=typer.colors.RED
+                    )
+                    _console.print_exception(show_locals=True)
+                    typer.secho(_("任务执行失败"), fg=typer.colors.RED)
+                    return
+            typer.secho(_("任务执行完毕"), fg=typer.colors.GREEN)
+            self._show_task_result(session.return_type_annotation, res)
 
     def _main(self):
         while self._is_running:
@@ -188,8 +195,6 @@ class CliApplication(Application):
                 choices=list(self._name_task_mapping.keys()),
             )
             task = self._name_task_mapping[task_name]
-            for param in task.non_filled_params:
-                self._fill_param(param)
             self._execute_task(task)
 
     def __call__(self):

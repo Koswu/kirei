@@ -8,9 +8,6 @@ from kirei.types.annotated._validator import (
 )
 from kirei.types.annotated.basic_types import PathType, Path
 
-UserInputFilePath = Annotated[Path, PathType(type="user_input_file")]
-TempDirPath = Annotated[Path, PathType(type="temp_dir")]
-
 
 def _validate_path_type(path_type: PathType, path: Path):
     if path_type.type == "user_input_file" and not path.is_file():
