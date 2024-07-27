@@ -3,6 +3,8 @@ from kirei.types.annotated._validator import (
     ValidatorProvider as ValidatorProvider,
     AfterValidator as AfterValidator,
     AnyValidator as AnyValidator,
+    ValidatorChain as ValidatorChain,
+    TypeValidatorProvider as TypeValidatorProvider,
 )
 from kirei.types.annotated.basic_types import PathType, Path
 

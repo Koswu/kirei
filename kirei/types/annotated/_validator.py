@@ -27,7 +27,7 @@ PartialPreValidator = Callable[[_InfoT, Any], _TargetT]
 PartialAfterValidator = Callable[[_InfoT, _TargetT], _TargetT]
 
 
-class _ValidatorChain(Sequence[AnyValidator[_TargetT]]):
+class ValidatorChain(Sequence[AnyValidator[_TargetT]]):
     def __init__(self, chain: Sequence[AnyValidator[_TargetT]]):
         if not chain:
             raise ValueError("chain must not be empty")
@@ -54,7 +54,7 @@ class _ValidatorChain(Sequence[AnyValidator[_TargetT]]):
         return self
 
 
-class _TypeValidatorProvider(Generic[_TargetT]):
+class TypeValidatorProvider(Generic[_TargetT]):
     def __init__(self, initial_validator: PreValidator[_TargetT]):
         self._initial_validator = initial_validator
         self._validator_generator_mapping: Dict[
@@ -84,7 +84,7 @@ class _TypeValidatorProvider(Generic[_TargetT]):
         return generator(info)
 
     def get_validator(self, *infos: Any):
-        validator_chain = _ValidatorChain([self._initial_validator])
+        validator_chain = ValidatorChain([self._initial_validator])
         for info in infos:
             for validator_type in ["pre", "after"]:
                 validator_type = cast(ValidatorType, validator_type)
@@ -99,7 +99,7 @@ class _TypeValidatorProvider(Generic[_TargetT]):
 
 class ValidatorProvider:
     def __init__(self):
-        self._tp_to_validator_provider: Dict[Type, _TypeValidatorProvider] = {}
+        self._tp_to_validator_provider: Dict[Type, TypeValidatorProvider] = {}
 
     def push_pre_partial_validator(
         self,
@@ -130,11 +130,11 @@ class ValidatorProvider:
         return self
 
     def reset_validator(self, tp: Type[_TargetT], validator: PreValidator[_TargetT]):
-        self._tp_to_validator_provider[tp] = _TypeValidatorProvider(validator)
+        self._tp_to_validator_provider[tp] = TypeValidatorProvider(validator)
         return self
 
-    def _get_validator_provider(self, tp: Type[_TargetT]) -> _TypeValidatorProvider:
-        return self._tp_to_validator_provider.setdefault(tp, _TypeValidatorProvider(tp))
+    def _get_validator_provider(self, tp: Type[_TargetT]) -> TypeValidatorProvider:
+        return self._tp_to_validator_provider.setdefault(tp, TypeValidatorProvider(tp))
 
     def _get_constraints(self, t: Type[_TargetT]) -> List[Any]:
         origin = get_origin(t)
