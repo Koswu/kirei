@@ -49,7 +49,8 @@ def _anystr_inquirer(
     return pt.prompt(
         _("请输入第 {} 个参数，参数名称 {}, 参数类型: {} :").format(
             index, name, type_name
-        )
+        ),
+        completer=completer,
     )
 
 
@@ -77,9 +78,7 @@ def _user_file_inquirer(param: FuncParam) -> str:
         param.index,
         param.name,
         _("文件(需要输入文件路径)"),
-        completer=ptc.PathCompleter(
-            get_paths=os.listdir,
-        ),
+        completer=ptc.PathCompleter(),
     )
 
 
