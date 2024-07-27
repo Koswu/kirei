@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "kirei",
+        "pydantic",
         "typer"
     ],
     "python.analysis.autoFormatStrings": false

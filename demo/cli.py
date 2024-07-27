@@ -29,13 +29,13 @@ def div(a: int, b: int):
 
 
 @app.register()
-def file_test(f: krtp.UserInputFilePath):
+def file_test(f: kr.UserInputFilePath):
     print(f)
 
 
 @app.register()
-def csv_to_xlsx(f: krtp.UserInputFilePath) -> krtp.UserOutputFilePath:
-    return krtp.UserOutputFilePath(f)
+def csv_to_xlsx(f: kr.UserInputFilePath) -> kr.OutputFilePath:
+    return f
 
 
 if __name__ == "__main__":

@@ -80,9 +80,9 @@ class FuncParam(Generic[_T]):
         return cast(_T, self._filled_value)
 
     def fill(self, value: Any):
-        assert not self._is_filled
-        self._is_filled = True
+        assert not self._is_filled, "Param is already filled"
         self._filled_value = self._validator(value)
+        self._is_filled = True
         return self
 
     def maybe_fill_with_injector(self, injector: ParamInjector[_T]):
@@ -136,7 +136,7 @@ class TaskSession(Generic[_P, _T]):
         return ParamAnnotation(annotation)
 
     def __call__(self) -> _T:
-        res = self._func(*[param.get_value() for param in self._func_params])  # type: ignore
+        res = self._func(*[param.get_value() for param in self._params])  # type: ignore
         return res
 
 

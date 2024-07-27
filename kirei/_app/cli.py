@@ -11,7 +11,6 @@ from typing import (
     Optional,
     TypeVar,
 )
-from fastapi.background import P
 import inquirer
 import prompt_toolkit as pt
 from prompt_toolkit import completion as ptc
@@ -29,6 +28,7 @@ from kirei.types import (
     ParamInquirerCollection,
     ReplierCollection,
 )
+from kirei.types._injector import get_default_context_collection
 from kirei.types._param_annotation import ParamAnnotation
 from kirei.types.annotated.basic_types import PathType
 
@@ -39,6 +39,7 @@ _console = rich.console.Console()
 
 
 _logger = logging.getLogger(__name__)
+_context_collection = get_default_context_collection()
 
 
 def _anystr_inquirer(
@@ -74,8 +75,8 @@ def _user_file_inquirer(param: FuncParam) -> str:
     return _anystr_inquirer(
         param.index,
         param.name,
-        _("文件"),
-        completer=ptc.PathCompleter(min_input_len=1),
+        _("文件(需要输入文件路径)"),
+        completer=ptc.PathCompleter(),
     )
 
 
@@ -97,7 +98,7 @@ def _file_replier(param: ParamAnnotation, res: pathlib.Path):
         out_path = pathlib.Path(
             pt.prompt(
                 _("执行结果为文件，请输入要保存到的位置:"),
-                completer=ptc.PathCompleter(only_directories=True, min_input_len=1),
+                completer=ptc.PathCompleter(only_directories=True),
             )
         )
         if out_path.exists() and out_path.is_dir():
@@ -126,7 +127,7 @@ class CliApplication(Application):
     ):
         self._name_task_mapping: Dict[str, ParsedFunc] = {}
         self._title = title
-        self._func_parser = FuncParser()
+        self._func_parser = FuncParser(_context_collection)
         self._is_running = True
         self.register(_("退出"))(lambda: self._exit())
 

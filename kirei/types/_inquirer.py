@@ -26,6 +26,7 @@ class ParamInquirerCollection:
     def __call__(self, param: FuncParam) -> Any:
         for inquirer in self._inquirers.get(param.real_source_type, []):
             res = inquirer(param)
+            print(f"inquired {res}")
             if res is not NotImplemented:
                 return res
         raise TypeError(f"Unsupported input type {param.real_source_type}")
