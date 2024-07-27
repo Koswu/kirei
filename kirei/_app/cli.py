@@ -8,12 +8,8 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Generic,
     Optional,
-    Type,
     TypeVar,
-    cast,
-    final,
 )
 from fastapi.background import P
 import inquirer
@@ -144,7 +140,9 @@ class CliApplication(Application):
             task_name = override_task_name or func.__name__
             if task_name in self._name_task_mapping:
                 raise TypeError(_(f"Multiple task can not have same name: {task_name}"))
-            self._name_task_mapping[task_name] = self._func_parser(func)
+            self._name_task_mapping[task_name] = self._func_parser.parse(
+                func, override_task_name
+            )
             return func
 
         return decorator
@@ -166,14 +164,14 @@ class CliApplication(Application):
             typer.secho(_("任务执行结果处理失败:{}".format(err)), fg=typer.colors.RED)
 
     def _execute_task(self, task: ParsedFunc):
-        typer.secho(_("开始执行任务 {}").format(task.func_name), fg=typer.colors.GREEN)
+        typer.secho(_("开始执行任务 {}").format(task.name), fg=typer.colors.GREEN)
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             transient=True,
         ) as progress:
             try:
-                progress.add_task(_("正在执行任务 {}").format(task.func_name))
+                progress.add_task(_("正在执行任务 {}").format(task.name))
                 res = task()
             except Exception as err:
                 typer.secho(_("任务执行失败:以下是相关的错误信息"), fg=typer.colors.RED)

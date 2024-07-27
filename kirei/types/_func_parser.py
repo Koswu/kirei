@@ -8,7 +8,6 @@ from typing import (
     Generic,
     Iterator,
     List,
-    Literal,
     Optional,
     Sequence,
     Type,
@@ -34,6 +33,7 @@ _logger = logging.getLogger(__name__)
 
 class ParamAnnotation(Generic[_T]):
     def __init__(self, tp: Type[_T]):
+        assert tp is not inspect.Parameter.empty
         self._tp = tp
 
     @property
@@ -49,7 +49,7 @@ class ParamAnnotation(Generic[_T]):
     @property
     def real_source_type(self) -> Type[_T]:
         origin = get_origin(self._tp)
-        if not origin:
+        if origin is None:
             return self._tp
         elif origin is Annotated:
             return get_args(self._tp)[0]
@@ -76,6 +76,9 @@ class FuncParam(Generic[_T]):
         self._name = name
         self._tp = ParamAnnotation(tp)
         self._validator = validator
+
+    def __repr__(self) -> str:
+        return super().__repr__() + f"({self._name})"
 
     @property
     def index(self):
@@ -134,6 +137,7 @@ class ParsedFunc(Generic[_P, _T]):
         injectors: List[ParamInjector],
         func: Callable[_P, _T],
         validator_provider: ValidatorProvider,
+        override_name: Optional[str] = None,
     ):
         self._injectors = injectors
         self._func = func
@@ -142,17 +146,21 @@ class ParsedFunc(Generic[_P, _T]):
         for injector in self._injectors:
             for param in self._func_params:
                 param.maybe_fill_with_injector(injector)
+        self._name = override_name or func.__name__
 
     @property
     def return_type_annotation(self):
-        return ParamAnnotation(inspect.signature(self._func).return_annotation)
+        annotation = inspect.signature(self._func).return_annotation
+        if annotation is inspect.Parameter.empty:
+            return ParamAnnotation(str)
+        return ParamAnnotation(annotation)
 
     @property
-    def func_name(self):
-        return self._func.__name__
+    def name(self):
+        return self._name
 
     def _get_func_params(self) -> Iterator[FuncParam]:
-        sig = inspect.signature(self._func)
+        sig: inspect.Signature = inspect.signature(self._func)
         index = 1
         for param in sig.parameters.values():
             tp = param.annotation
@@ -185,5 +193,7 @@ class FuncParser:
             validator_provider or get_default_validator_provider()
         )
 
-    def __call__(self, func: Callable) -> ParsedFunc:
-        return ParsedFunc(self._injectors, func, self._validator_provider)
+    def parse(self, func: Callable, override_name: Optional[str] = None) -> ParsedFunc:
+        return ParsedFunc(
+            self._injectors, func, self._validator_provider, override_name
+        )

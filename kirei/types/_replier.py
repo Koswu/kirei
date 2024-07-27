@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Type, TypeVar, Union
-from types import NotImplementedType
+from types import NoneType, NotImplementedType
 
 from kirei.types._func_parser import ParamAnnotation
 
@@ -11,7 +11,9 @@ OutputReplier = Callable[[ParamAnnotation[_T], _T], Union[None, NotImplementedTy
 
 class ReplierCollection:
     def __init__(self):
-        self._repliers: Dict[Type, List[OutputReplier]] = {}
+        self._repliers: Dict[Type, List[OutputReplier]] = {
+            NoneType: [lambda x, y: None]
+        }
 
     def register(self, replier: OutputReplier, tp: Type):
         self._repliers.setdefault(tp, []).append(replier)
