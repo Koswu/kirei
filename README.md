@@ -1,5 +1,8 @@
 # KiRei
 
+[![PyPi version](https://pypip.in/v/kirei/badge.png)](https://crate.io/packages/kirei/)
+[![PyPi downloads](https://pypip.in/d/kirei/badge.png)](https://crate.io/packages/kirei/)
+
 Kirei is a typed, multi-backend user interface framework. 
 You can easily add an (or multiple, if you want!) user interface to your script.
 
